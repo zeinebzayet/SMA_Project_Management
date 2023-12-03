@@ -34,7 +34,7 @@ public class AgentChefDeProjet extends Agent {
         rechercherEtDistribuerTaches("AgentDeveloppeur");
         rechercherEtDistribuerTaches("AgentTesteur");
 
-            }
+    }
 
 
 
@@ -47,10 +47,11 @@ public class AgentChefDeProjet extends Agent {
         template.addServices(sd);
 
         try {
-            System.out.print("rechercherEtDistribuerTaches");
+            System.out.print("rechercher Et Distribuer Taches");
 
             DFAgentDescription[] result = DFService.search(this, template);
             for (DFAgentDescription dfd : result) {
+
                 AID agentAID = dfd.getName();
                 // Distribuer une tâche à chaque agent du type spécifié
                 distribuerTache(agentAID, typeAgent);
@@ -63,7 +64,7 @@ public class AgentChefDeProjet extends Agent {
 
     private void distribuerTache(AID agent, String typeAgent) {
         // Récupérer la prochaine tâche pour l'agent
-        System.out.print("distribuerTache");
+        System.out.print("distribuer Tache");
 
         ArrayList<String> taches = tachesAgents.get(typeAgent);
         if (taches != null && !taches.isEmpty()) {
@@ -74,22 +75,38 @@ public class AgentChefDeProjet extends Agent {
 
     private void planifierEtDistribuerTache(AID agent, String tache) {
         // Logique de planification
-        System.out.print("hhhhh");
+        ACLMessage occupe = new ACLMessage(ACLMessage.REQUEST);
+        occupe.setContent("Es_tu_occupe?");
+        occupe.addReceiver(agent);
+        send(occupe);
+        ACLMessage response = blockingReceive();
+        System.out.println("Agent chef :"+response.getContent());
 
-        System.out.println("Agent Chef de Projet - Planifier tâche : " + tache);
+        if (response != null) {
+            String request = response.getContent();
+            if (request.equals("non")) {
+                System.out.println("Agent Chef de Projet - Planifier tâche : " + tache);
 
-        // Créer un message pour demander à l'agent de prendre la tâche
-        ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
-        demande.setContent(tache);
+                // Créer un message pour demander à l'agent de prendre la tâche
+                ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
+                demande.setContent(tache);
 
-        // Ajouter le destinataire (agent spécifique)
-        demande.addReceiver(agent);
+                // Ajouter le destinataire (agent spécifique)
+                demande.addReceiver(agent);
 
-        // Envoyer la demande à l'agent spécifique
-        send(demande);
+                // Envoyer la demande à l'agent spécifique
+                send(demande);
 
-        // Attendre la réponse de l'agent
-        addBehaviour(new AttendreReponsesPlanification(this, demande));
+                // Attendre la réponse de l'agent
+               addBehaviour(new AttendreReponsesPlanification(this, demande));
+            }
+            else {
+                System.out.println("Agent Chef de Projet - Aucun agent disponible pour la tâche.");
+
+            }
+
+        }
+
     }
 
     private void apprendre() {
