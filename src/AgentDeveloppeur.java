@@ -1,3 +1,4 @@
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -23,7 +24,7 @@ public class AgentDeveloppeur extends Agent {
             if (message != null) {
                 // Si un message est reçu, traiter la tâche
                 String request = message.getContent();
-                if (request.equals("Es_tu_occupe?")) {
+                if (request.contains("Es_tu_occupe?")) {
                     if (occupe==false) {
                         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
                         response.setContent("non");
@@ -40,10 +41,34 @@ public class AgentDeveloppeur extends Agent {
                 else {
                     ACLMessage messageTache = blockingReceive();
                     if (messageTache != null) {
-                        // Si un message est reçu, traiter la tâche
+// Si un message est reçu, traiter la tâche
                         String tache = messageTache.getContent();
-                        System.out.println("Agent Développeur - Tâche reçue : " + tache);
-                        traiterTache(tache);
+                        // Si un message est reçu, traiter la tâche
+                        String[] parts = tache.split(" ");
+                        if (parts.length == 2) {
+                            String receivedTache = parts[0];
+                            try {
+                                int receivedDuree = Integer.parseInt(parts[1]); // Assuming duration is an integer
+
+                                // Now you have extracted values: receivedTache and receivedDuree
+                                System.out.println("Received Tache: " + receivedTache);
+                                System.out.println("Received Duree: " + receivedDuree);
+                                traiterTache(receivedTache, receivedDuree);
+                            } catch (NumberFormatException e) {
+                                // Handle the case where duration is not a valid integer
+                                System.err.println("Invalid duration format: " + parts[1]);
+                            }
+                        } else {
+                            // Handle the case where the content is not in the expected format
+                            System.err.println("Invalid content format: " + tache);
+                        }
+
+
+
+
+
+
+
                     }
                 }
             } else {
@@ -52,17 +77,10 @@ public class AgentDeveloppeur extends Agent {
         }
     }
 
-    private void traiterTache(String tache) {
+    private void traiterTache(String receivedTache,int receivedDuree) {
         occupe = true;
-        // Logique de traitement de la tâche reçue
-        System.out.println("Agent Développeur - Traitement de la tâche : " + tache);
-        // Mettez en œuvre ici la logique de traitement de la tâche
-        occupe = false;
-    }
-
-    private void apprendre() {
         // Simuler un temps de traitement aléatoire entre 1 et 5 secondes
-        int tempsTraitement = (int) (Math.random() * 4000) + 7000; // entre 1 et 5 secondes
+        int tempsTraitement = (int) (Math.random() * 4000) + 1000; // entre 1 et 5 secondes
         try {
             Thread.sleep(tempsTraitement);
         } catch (InterruptedException e) {
@@ -70,7 +88,14 @@ public class AgentDeveloppeur extends Agent {
         }
         System.out.println("Agent Développeur - Apprentissage en cours...");
         // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
+        occupe = false;
+        ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+        response.setContent("non");
+        response.addReceiver(new AID("AgentChefDeProjet",AID.ISLOCALNAME));
+        send(response);
     }
+
+
 
     private void registerService() {
         DFAgentDescription dfd = new DFAgentDescription();
