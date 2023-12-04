@@ -1,3 +1,4 @@
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
 import jade.domain.DFService;
@@ -10,38 +11,55 @@ public class AgentDeveloppeur extends Agent {
     private boolean occupe = false;
 
     protected void setup() {
-        System.out.println("Agent Développeur - Prêt." + getLocalName());
+        System.out.println(getLocalName()+" - Prêt.");
         registerService();
 
-        // Comportement cyclique
-        addBehaviour(new DeveloppeurBehaviour());
+        addBehaviour(new ReceiveTaskBehaviour());
     }
 
-    private class DeveloppeurBehaviour extends CyclicBehaviour {
+    private class ReceiveTaskBehaviour extends CyclicBehaviour {
         public void action() {
             ACLMessage message = receive();
             if (message != null) {
-                // Si un message est reçu, traiter la tâche
                 String request = message.getContent();
-                if (request.equals("Es_tu_occupe?")) {
-                    if (!occupe) {
+                if (request.contains("Est_tu_occupes")) {
+                    System.out.println(message.getSender().getLocalName()+ ": "+request);
+                    if (occupe==false) {
                         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
                         response.setContent("non");
                         response.addReceiver(message.getSender());
                         send(response);
+
                     } else {
                         ACLMessage response1 = new ACLMessage(ACLMessage.REQUEST);
                         response1.setContent("oui");
                         response1.addReceiver(message.getSender());
                         send(response1);
                     }
-                } else {
-                    ACLMessage messageTache = blockingReceive();
-                    if (messageTache != null) {
+                }
+                else {
+                    if (message != null) {
+                        String tache = message.getContent();
+                        System.out.println(getLocalName()+" tache et durée reçues: "+tache);
                         // Si un message est reçu, traiter la tâche
-                        String tache = messageTache.getContent();
-                        System.out.println("Agent Développeur - Tâche reçue : " + tache);
-                        traiterTache(tache);
+                        String[] parts = tache.split(" ");
+                        if (parts.length == 2) {
+                            String receivedTache = parts[0];
+                            try {
+                                int receivedDuree = Integer.parseInt(parts[1]); // Assuming duration is an integer
+
+                                // Now you have extracted values: receivedTache and receivedDuree
+                                System.out.println("Received Tache: " + receivedTache);
+                                System.out.println("Received Duree: " + receivedDuree);
+                                traiterTache(receivedTache, receivedDuree);
+                            } catch (NumberFormatException e) {
+                                // Handle the case where duration is not a valid integer
+                                System.err.println("Invalid duration format: " + parts[1]);
+                            }
+                        } else {
+                            // Handle the case where the content is not in the expected format
+                            System.err.println("Invalid content format: " + tache);
+                        }
                     }
                 }
             } else {
@@ -50,19 +68,25 @@ public class AgentDeveloppeur extends Agent {
         }
     }
 
-    private void traiterTache(String tache) {
+    private void traiterTache(String receivedTache,int receivedDuree) {
         occupe = true;
-        // Logique de traitement de la tâche reçue
-        System.out.println("Agent Développeur - Traitement de la tâche : " + tache);
-        int tempsTraitement = (int) (Math.random() * 4000) + 7000; // entre 7 et 11 secondes
+        // Simuler un temps de traitement aléatoire entre 1 et 5 secondes
+        int tempsTraitement = receivedDuree;
         try {
             Thread.sleep(tempsTraitement);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        // Mettez en œuvre ici la logique de traitement de la tâche
+        System.out.println(this.getLocalName()+" - Apprentissage en cours...");
+        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
         occupe = false;
+        ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+        response.setContent("non");
+        response.addReceiver(new AID("AgentChefDeProjet",AID.ISLOCALNAME));
+        send(response);
     }
+
+
 
     private void registerService() {
         DFAgentDescription dfd = new DFAgentDescription();

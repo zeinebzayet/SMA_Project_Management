@@ -19,8 +19,6 @@ public class Main {
             p.setParameter(Profile.GUI, "true"); // Activation de l'interface graphique
             AgentContainer mainContainer = rt.createMainContainer(p);
 
-            // Vous pouvez également configurer d'autres paramètres de profil au besoin
-            // p.setParameter(...);
 
             // Création des agents cognitifs
             AgentController agentControllerDeveloppeur1 = mainContainer.createNewAgent("Developpeur 1", AgentDeveloppeur.class.getName(), null);
@@ -35,19 +33,13 @@ public class Main {
 
 
             // Démarrage des agents
-
             agentControllerDeveloppeur1.start();
             agentControllerDeveloppeur2.start();
             agentControllerDeveloppeur3.start();
             agentControllerTesteur1.start();
             agentControllerTesteur2.start();
-
             agentControllerChef.start();
 
-
-
-
-            System.out.println("Plateforme JADE lancée avec l'interface graphique.");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
