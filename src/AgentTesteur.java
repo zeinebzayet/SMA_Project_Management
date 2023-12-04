@@ -62,6 +62,7 @@ public class AgentTesteur extends Agent {
 
     private void apprendre() {
         // Logique d'apprentissage
+<<<<<<< HEAD
         System.out.println("Agent Testeur - Apprentissage en cours...");
         int tempsTraitement = (int) (Math.random() * 4000) + 7000; // entre 1 et 5 secondes
         try {
@@ -69,6 +70,11 @@ public class AgentTesteur extends Agent {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }       }
+=======
+        System.out.println("Agent Développeur - Apprentissage en cours...");
+        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
+    }
+>>>>>>> 72af933367341341a9dd3de33865d257ff6f3ae8
 
     private void registerService() {
         DFAgentDescription dfd = new DFAgentDescription();

@@ -49,7 +49,11 @@ public class AgentChefDeProjet extends Agent {
             for (int i = 0; i < result.length; i++) {
                 DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
+<<<<<<< HEAD
                 System.out.println("nnnnnnnnnnnnnnnnnnnnnnnnnnn"+isOccupe());
+=======
+
+>>>>>>> 72af933367341341a9dd3de33865d257ff6f3ae8
                 if(isOccupe()) {
                     if (i + 1 < result.length) {
                         // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
@@ -106,7 +110,11 @@ public class AgentChefDeProjet extends Agent {
                 send(demande);
 
                 // Attendre la réponse de l'agent
+<<<<<<< HEAD
                 addBehaviour(new AttendreReponsesPlanification(this, demande));
+=======
+               addBehaviour(new AttendreReponsesPlanification(this, demande));
+>>>>>>> 72af933367341341a9dd3de33865d257ff6f3ae8
             }
             else {
                 this.setOccupe(true);
