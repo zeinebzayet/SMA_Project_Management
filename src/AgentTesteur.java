@@ -13,31 +13,29 @@ public class AgentTesteur extends Agent {
         System.out.println("Agent Testeur - Prêt." + getLocalName());
         registerService();
 
-        // Comportement cognitif
-        addBehaviour(new ReceiveTaskBehaviour());
+        // Comportement cyclique
+        addBehaviour(new TesteurBehaviour());
     }
 
-    private class ReceiveTaskBehaviour extends CyclicBehaviour {
+    private class TesteurBehaviour extends CyclicBehaviour {
         public void action() {
             ACLMessage message = receive();
             if (message != null) {
                 // Si un message est reçu, traiter la tâche
                 String request = message.getContent();
                 if (request.equals("Es_tu_occupe?")) {
-                    if (occupe==false) {
+                    if (!occupe) {
                         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
                         response.setContent("non");
                         response.addReceiver(message.getSender());
                         send(response);
-
                     } else {
                         ACLMessage response1 = new ACLMessage(ACLMessage.REQUEST);
                         response1.setContent("oui");
                         response1.addReceiver(message.getSender());
                         send(response1);
                     }
-                }
-                else {
+                } else {
                     ACLMessage messageTache = blockingReceive();
                     if (messageTache != null) {
                         // Si un message est reçu, traiter la tâche
@@ -56,14 +54,14 @@ public class AgentTesteur extends Agent {
         occupe = true;
         // Logique de traitement de la tâche reçue
         System.out.println("Agent testeur - Traitement de la tâche : " + tache);
+        int tempsTraitement = (int) (Math.random() * 4000) + 7000; // entre 7 et 11 secondes
+        try {
+            Thread.sleep(tempsTraitement);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         // Mettez en œuvre ici la logique de traitement de la tâche
         occupe = false;
-    }
-
-    private void apprendre() {
-        // Logique d'apprentissage
-        System.out.println("Agent Développeur - Apprentissage en cours...");
-        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
     }
 
     private void registerService() {
