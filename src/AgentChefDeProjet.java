@@ -10,31 +10,28 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.proto.AchieveREResponder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 
 public class AgentChefDeProjet extends Agent {
 
     // Liste de tâches associées à chaque agent
     private Map<String, ArrayList<String>> tachesAgents = new HashMap<>();
+    private boolean occupe=false;
+    private String tache="";
 
     protected void setup() {
-        System.out.println("Agent Chef de Projet - Prêt.");
+        System.out.println("Agent Chef de Projet ");
 
         // Associer des tâches aux agents
         tachesAgents.put("AgentDeveloppeur", new ArrayList<>(List.of("TâcheD1", "TâcheD2", "TâcheD3")));
         tachesAgents.put("AgentTesteur", new ArrayList<>(List.of("TâcheT1", "TâcheT2", "TâcheT3")));
 
-
-
         // Planifier et distribuer les tâches aux développeurs
         rechercherEtDistribuerTaches("AgentDeveloppeur");
         rechercherEtDistribuerTaches("AgentTesteur");
 
-            }
+    }
 
 
 
@@ -45,15 +42,26 @@ public class AgentChefDeProjet extends Agent {
         ServiceDescription sd = new ServiceDescription();
         sd.setType(typeAgent);
         template.addServices(sd);
-
         try {
-            System.out.print("rechercherEtDistribuerTaches");
+            System.out.print("rechercher Et Distribuer Taches");
 
             DFAgentDescription[] result = DFService.search(this, template);
-            for (DFAgentDescription dfd : result) {
+            for (int i = 0; i < result.length; i++) {
+                DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
-                // Distribuer une tâche à chaque agent du type spécifié
+                System.out.println("nnnnnnnnnnnnnnnnnnnnnnnnnnn"+isOccupe());
+                if(isOccupe()) {
+                    if (i + 1 < result.length) {
+                        // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
+                        DFAgentDescription dfdSuivant = result[i + 1];
+                        AID agentAIDSuivant = dfdSuivant.getName();
+                        planifierEtDistribuerTache(agentAIDSuivant, this.getTache());
+                        i++; // Avance d'un agent dans la liste
+                    }
+                }
                 distribuerTache(agentAID, typeAgent);
+
+
                 System.out.println(agentAID);
             }
         } catch (FIPAException fe) {
@@ -63,7 +71,7 @@ public class AgentChefDeProjet extends Agent {
 
     private void distribuerTache(AID agent, String typeAgent) {
         // Récupérer la prochaine tâche pour l'agent
-        System.out.print("distribuerTache");
+        System.out.print("distribuer Tache");
 
         ArrayList<String> taches = tachesAgents.get(typeAgent);
         if (taches != null && !taches.isEmpty()) {
@@ -74,22 +82,53 @@ public class AgentChefDeProjet extends Agent {
 
     private void planifierEtDistribuerTache(AID agent, String tache) {
         // Logique de planification
-        System.out.print("hhhhh");
+        ACLMessage occupe = new ACLMessage(ACLMessage.REQUEST);
+        occupe.setContent("Es_tu_occupe?");
+        occupe.addReceiver(agent);
+        send(occupe);
+        ACLMessage response = blockingReceive();
+        System.out.println("Agent chef :"+response.getContent());
 
-        System.out.println("Agent Chef de Projet - Planifier tâche : " + tache);
+        if (response != null) {
+            String request = response.getContent();
+            if (request.equals("non")) {
+                this.setOccupe(false);
+                System.out.println("Agent Chef de Projet - Planifier tâche : " + tache);
 
-        // Créer un message pour demander à l'agent de prendre la tâche
-        ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
-        demande.setContent(tache);
+                // Créer un message pour demander à l'agent de prendre la tâche
+                ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
+                demande.setContent(tache);
 
-        // Ajouter le destinataire (agent spécifique)
-        demande.addReceiver(agent);
+                // Ajouter le destinataire (agent spécifique)
+                demande.addReceiver(agent);
 
-        // Envoyer la demande à l'agent spécifique
-        send(demande);
+                // Envoyer la demande à l'agent spécifique
+                send(demande);
 
-        // Attendre la réponse de l'agent
-        addBehaviour(new AttendreReponsesPlanification(this, demande));
+                // Attendre la réponse de l'agent
+                addBehaviour(new AttendreReponsesPlanification(this, demande));
+            }
+            else {
+                this.setOccupe(true);
+                this.setTache(tache);
+            }
+        }
+    }
+
+    public boolean isOccupe() {
+        return occupe;
+    }
+
+    public void setOccupe(boolean occupe) {
+        this.occupe = occupe;
+    }
+
+    public void setTache(String tache) {
+        this.tache = tache;
+    }
+
+    public String getTache() {
+        return tache;
     }
 
     private void apprendre() {

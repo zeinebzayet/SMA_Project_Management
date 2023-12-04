@@ -1,6 +1,5 @@
 import jade.core.Agent;
 import jade.core.behaviours.CyclicBehaviour;
-import jade.core.behaviours.SimpleBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
@@ -8,37 +7,69 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 public class AgentTesteur extends Agent {
+    private boolean occupe = true;
 
     protected void setup() {
-        System.out.println("Agent testeur - Prêt.");
+        System.out.println("Agent Testeur - Prêt." + getLocalName());
         registerService();
 
-        ACLMessage message = blockingReceive();
-        if (message != null) {
-            // Si un message est reçu, traiter la tâche
-            String tache = message.getContent();
-            System.out.println("Agent testeur - Tâche reçue : " + tache);
+        // Comportement cognitif
+        addBehaviour(new ReceiveTaskBehaviour());
+    }
 
-        } else {
-            // Si aucun message n'est reçu, attendre
-            System.out.println("block");
+    private class ReceiveTaskBehaviour extends CyclicBehaviour {
+        public void action() {
+            ACLMessage message = receive();
+            if (message != null) {
+                // Si un message est reçu, traiter la tâche
+                String request = message.getContent();
+                if (request.equals("Es_tu_occupe?")) {
+                    if (occupe==false) {
+                        ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+                        response.setContent("non");
+                        response.addReceiver(message.getSender());
+                        send(response);
+
+                    } else {
+                        ACLMessage response1 = new ACLMessage(ACLMessage.REQUEST);
+                        response1.setContent("oui");
+                        response1.addReceiver(message.getSender());
+                        send(response1);
+                    }
+                }
+                else {
+                    ACLMessage messageTache = blockingReceive();
+                    if (messageTache != null) {
+                        // Si un message est reçu, traiter la tâche
+                        String tache = messageTache.getContent();
+                        System.out.println("Agent testeur - Tâche reçue : " + tache);
+                        traiterTache(tache);
+                    }
+                }
+            } else {
+                block();
+            }
         }
-
-
-
     }
 
     private void traiterTache(String tache) {
+        occupe = true;
         // Logique de traitement de la tâche reçue
         System.out.println("Agent testeur - Traitement de la tâche : " + tache);
         // Mettez en œuvre ici la logique de traitement de la tâche
+        occupe = false;
     }
 
     private void apprendre() {
         // Logique d'apprentissage
-        System.out.println("Agent testeur - Apprentissage en cours...");
-        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
-    }
+        System.out.println("Agent Testeur - Apprentissage en cours...");
+        int tempsTraitement = (int) (Math.random() * 4000) + 7000; // entre 1 et 5 secondes
+        try {
+            Thread.sleep(tempsTraitement);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }       }
+
     private void registerService() {
         DFAgentDescription dfd = new DFAgentDescription();
         dfd.setName(this.getAID());
@@ -49,8 +80,7 @@ public class AgentTesteur extends Agent {
         dfd.addServices(sd);
         try {
             DFService.register(this, dfd);
-        }
-        catch (FIPAException e) {
+        } catch (FIPAException e) {
             System.err.println(getLocalName() + " registration with DF unsucceeded. Reason: " + e.getMessage());
             doDelete();
         }
