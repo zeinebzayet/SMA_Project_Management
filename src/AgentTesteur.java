@@ -7,10 +7,10 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 public class AgentTesteur extends Agent {
-    private boolean occupe = false;
+    private boolean occupe = true;
 
     protected void setup() {
-        System.out.println("Agent Développeur - Prêt." + getLocalName());
+        System.out.println("Agent Testeur - Prêt." + getLocalName());
         registerService();
 
         // Comportement cognitif
@@ -33,6 +33,7 @@ public class AgentTesteur extends Agent {
                     } else {
                         ACLMessage response1 = new ACLMessage(ACLMessage.REQUEST);
                         response1.setContent("oui");
+                        response1.addReceiver(message.getSender());
                         send(response1);
                     }
                 }

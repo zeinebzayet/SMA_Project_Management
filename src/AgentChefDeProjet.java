@@ -10,16 +10,15 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.proto.AchieveREResponder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.List;
+import java.util.*;
 
 
 public class AgentChefDeProjet extends Agent {
 
     // Liste de tâches associées à chaque agent
     private Map<String, ArrayList<String>> tachesAgents = new HashMap<>();
+    private boolean occupe=false;
+    private String tache="";
 
     protected void setup() {
         System.out.println("Agent Chef de Projet - Prêt.");
@@ -27,8 +26,6 @@ public class AgentChefDeProjet extends Agent {
         // Associer des tâches aux agents
         tachesAgents.put("AgentDeveloppeur", new ArrayList<>(List.of("TâcheD1", "TâcheD2", "TâcheD3")));
         tachesAgents.put("AgentTesteur", new ArrayList<>(List.of("TâcheT1", "TâcheT2", "TâcheT3")));
-
-
 
         // Planifier et distribuer les tâches aux développeurs
         rechercherEtDistribuerTaches("AgentDeveloppeur");
@@ -45,16 +42,26 @@ public class AgentChefDeProjet extends Agent {
         ServiceDescription sd = new ServiceDescription();
         sd.setType(typeAgent);
         template.addServices(sd);
-
         try {
             System.out.print("rechercher Et Distribuer Taches");
 
             DFAgentDescription[] result = DFService.search(this, template);
-            for (DFAgentDescription dfd : result) {
-
+            for (int i = 0; i < result.length; i++) {
+                DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
-                // Distribuer une tâche à chaque agent du type spécifié
+
+                if(isOccupe()) {
+                    if (i + 1 < result.length) {
+                        // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
+                        DFAgentDescription dfdSuivant = result[i + 1];
+                        AID agentAIDSuivant = dfdSuivant.getName();
+                        planifierEtDistribuerTache(agentAIDSuivant, this.getTache());
+                        i++; // Avance d'un agent dans la liste
+                    }
+                }
                 distribuerTache(agentAID, typeAgent);
+
+
                 System.out.println(agentAID);
             }
         } catch (FIPAException fe) {
@@ -85,6 +92,7 @@ public class AgentChefDeProjet extends Agent {
         if (response != null) {
             String request = response.getContent();
             if (request.equals("non")) {
+                this.setOccupe(false);
                 System.out.println("Agent Chef de Projet - Planifier tâche : " + tache);
 
                 // Créer un message pour demander à l'agent de prendre la tâche
@@ -101,12 +109,26 @@ public class AgentChefDeProjet extends Agent {
                addBehaviour(new AttendreReponsesPlanification(this, demande));
             }
             else {
-                System.out.println("Agent Chef de Projet - Aucun agent disponible pour la tâche.");
-
+                this.setOccupe(true);
+                this.setTache(tache);
             }
-
         }
+    }
 
+    public boolean isOccupe() {
+        return occupe;
+    }
+
+    public void setOccupe(boolean occupe) {
+        this.occupe = occupe;
+    }
+
+    public void setTache(String tache) {
+        this.tache = tache;
+    }
+
+    public String getTache() {
+        return tache;
     }
 
     private void apprendre() {

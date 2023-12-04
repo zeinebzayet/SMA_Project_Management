@@ -7,7 +7,7 @@ import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
 public class AgentDeveloppeur extends Agent {
-    private boolean occupe = true;
+    private boolean occupe = false;
 
     protected void setup() {
         System.out.println("Agent Développeur - Prêt." + getLocalName());
@@ -33,6 +33,7 @@ public class AgentDeveloppeur extends Agent {
                     } else {
                         ACLMessage response1 = new ACLMessage(ACLMessage.REQUEST);
                         response1.setContent("oui");
+                        response1.addReceiver(message.getSender());
                         send(response1);
                     }
                 }
