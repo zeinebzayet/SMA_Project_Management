@@ -69,7 +69,6 @@ public class AgentChefDeProjet extends Agent {
             for (int i = 0; i < result.length; i++) {
                 DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
-
                 if (isOccupe()) {
                     if (i + 1 < result.length) {
                         // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
@@ -80,7 +79,6 @@ public class AgentChefDeProjet extends Agent {
                     }
                 }
                 extraireTache(agentAID, typeAgent);
-                System.out.println(agentAID);
             }
         } catch (FIPAException fe) {
             fe.printStackTrace();
@@ -110,7 +108,7 @@ public class AgentChefDeProjet extends Agent {
     private void testerEtaffecterTache(AID agent, String tache, int duree) {
         // Logique de planification
         ACLMessage occupe = new ACLMessage(ACLMessage.REQUEST);
-        occupe.setContent("Ya "+agent.getLocalName()+"Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
+        occupe.setContent("Ya "+agent.getLocalName()+" Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
         occupe.addReceiver(agent);
         send(occupe);
         ACLMessage response = blockingReceive();

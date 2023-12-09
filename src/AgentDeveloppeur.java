@@ -51,7 +51,6 @@ public class AgentDeveloppeur extends Agent {
                             String receivedTache = parts[0];
                             try {
                                 int receivedDuree = Integer.parseInt(parts[1]); // Assuming duration is an integer
-
                                 // Now you have extracted values: receivedTache and receivedDuree
                                 System.out.println("Received Tache: " + receivedTache);
                                 System.out.println("Received Duree: " + receivedDuree);
@@ -72,31 +71,41 @@ public class AgentDeveloppeur extends Agent {
         }
     }
 
-    private void traiterTache(String receivedTache,int receivedDuree) {
+    private void traiterTache(String receivedTache, int receivedDuree) {
         setOccupe(true);
         int tempsTraitement = receivedDuree;
-        try {
-            System.out.println(this.getLocalName()+" - Apprentissage en cours...");
-            ACLMessage message = receive();
-            if (message != null) {
-                String request = message.getContent();
-                if (request.contains("Est_tu_occupes")) {
-                    System.out.println(message.getSender().getLocalName() + ": " + request);
-                        ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
-                        response.setContent("oui");
-                        response.addReceiver(message.getSender());
-                        send(response);
 
+        try {
+            System.out.println(this.getLocalName() + " - Apprentissage en cours...");
+
+            // Loop to periodically check for messages during task execution
+            for (int i = 0; i < tempsTraitement; i++) {
+                ACLMessage message = receive();
+                if (message != null && message.getContent().contains("Est_tu_occupes")) {
+                    System.out.println(message.getSender().getLocalName() + ": " + message.getContent());
+                    // Respond with "oui" if a relevant message is received
+                    ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+                    response.setContent("oui");
+                    response.addReceiver(message.getSender());
+                    send(response);
                 }
+
+                // Sleep for 1 second before checking for messages again
+                Thread.sleep(1000);
             }
-            Thread.sleep(tempsTraitement);
+
+            // Simulate the completion of the task
+            System.out.println(this.getLocalName() + " - Tâche terminée.");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
         setOccupe(false);
+
+        // Notify the ChefDeProjet agent about the completion of the task
         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
-        response.setContent("J'ai terminé la tache planifiée");
-        response.addReceiver(new AID("AgentChefDeProjet",AID.ISLOCALNAME));
+        response.setContent("J'ai terminé la tâche planifiée");
+        response.addReceiver(new AID("AgentChefDeProjet", AID.ISLOCALNAME));
         send(response);
     }
 
