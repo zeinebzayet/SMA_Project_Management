@@ -10,8 +10,12 @@ import jade.lang.acl.ACLMessage;
 public class AgentDeveloppeur extends Agent {
     private boolean occupe = false;
 
+    public void setOccupe(boolean occupe) {
+        this.occupe = occupe;
+    }
+
     protected void setup() {
-        System.out.println(getLocalName()+" - Prêt.");
+        System.out.println("Je suis le "+ getLocalName()+" - Prêt.");
         registerService();
 
         addBehaviour(new ReceiveTaskBehaviour());
@@ -69,19 +73,29 @@ public class AgentDeveloppeur extends Agent {
     }
 
     private void traiterTache(String receivedTache,int receivedDuree) {
-        occupe = true;
-        // Simuler un temps de traitement aléatoire entre 1 et 5 secondes
+        setOccupe(true);
         int tempsTraitement = receivedDuree;
         try {
+            System.out.println(this.getLocalName()+" - Apprentissage en cours...");
+            ACLMessage message = receive();
+            if (message != null) {
+                String request = message.getContent();
+                if (request.contains("Est_tu_occupes")) {
+                    System.out.println(message.getSender().getLocalName() + ": " + request);
+                        ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+                        response.setContent("oui");
+                        response.addReceiver(message.getSender());
+                        send(response);
+
+                }
+            }
             Thread.sleep(tempsTraitement);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(this.getLocalName()+" - Apprentissage en cours...");
-        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
-        occupe = false;
+        setOccupe(false);
         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
-        response.setContent("non");
+        response.setContent("J'ai terminé la tache planifiée");
         response.addReceiver(new AID("AgentChefDeProjet",AID.ISLOCALNAME));
         send(response);
     }

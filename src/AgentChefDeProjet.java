@@ -7,12 +7,18 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.proto.AchieveREInitiator;
-
 import java.util.*;
-
 public class AgentChefDeProjet extends Agent {
+    public Map<String, Map<String, Integer>> getTachesAgents() {
+        return tachesAgents;
+    }
+
+    public void setTachesAgents(Map<String, Map<String, Integer>> tachesAgents) {
+        this.tachesAgents = tachesAgents;
+    }
 
     private Map<String, Map<String, Integer>> tachesAgents = new HashMap<>();
+
     private boolean occupe = false;
     private String tache = "";
 
@@ -21,15 +27,15 @@ public class AgentChefDeProjet extends Agent {
         System.out.println("Agent Chef de Projet - Prêt. ");
 
         Map<String, Integer> developpeurTasks = new HashMap<>();
-        developpeurTasks.put("TâcheD1", 10);  // Duration in minutes
-        developpeurTasks.put("TâcheD2", 15);
+        developpeurTasks.put("TâcheD1", 120);  // Duration in minutes
+        developpeurTasks.put("TâcheD2", 60);
         developpeurTasks.put("TâcheD3", 20);
-
+        developpeurTasks.put("TâcheD4", 30);
+        developpeurTasks.put("TâcheD5", 30);
         Map<String, Integer> testeurTasks = new HashMap<>();
-        testeurTasks.put("TâcheT1", 12);
-        testeurTasks.put("TâcheT2", 18);
-        testeurTasks.put("TâcheT3", 25);
-
+        testeurTasks.put("TâcheT1", 60);
+        testeurTasks.put("TâcheT2", 30);
+        testeurTasks.put("TâcheT3", 40);
         tachesAgents.put("AgentDeveloppeur", developpeurTasks);
         tachesAgents.put("AgentTesteur", testeurTasks);
 
@@ -40,12 +46,9 @@ public class AgentChefDeProjet extends Agent {
     private class CyclicTaskBehavior extends CyclicBehaviour {
 
         public void action() {
-
-            // Call the method to distribute tasks to agents
             rechercherAgents("AgentDeveloppeur");
             rechercherAgents("AgentTesteur");
 
-            // You may add a delay or sleep if needed
             try {
                 Thread.sleep(5000);  // Sleep for 5 seconds as an example
             } catch (InterruptedException e) {
@@ -66,6 +69,7 @@ public class AgentChefDeProjet extends Agent {
             for (int i = 0; i < result.length; i++) {
                 DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
+
                 if (isOccupe()) {
                     if (i + 1 < result.length) {
                         // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
@@ -76,7 +80,6 @@ public class AgentChefDeProjet extends Agent {
                     }
                 }
                 extraireTache(agentAID, typeAgent);
-
                 System.out.println(agentAID);
             }
         } catch (FIPAException fe) {
@@ -92,7 +95,6 @@ public class AgentChefDeProjet extends Agent {
             Map.Entry<String, Integer> taskEntry = tasksWithDuration.entrySet().iterator().next();
             String tache = taskEntry.getKey();
             int duree = taskEntry.getValue();
-
             // Remove the task from the map
             tasksWithDuration.remove(tache);
             testerEtaffecterTache(agent, tache,duree);
@@ -102,40 +104,32 @@ public class AgentChefDeProjet extends Agent {
     public void setDuree(int duree) {
         this.duree = duree;
     }
-
     public int getDuree() {
         return duree;
     }
-
     private void testerEtaffecterTache(AID agent, String tache, int duree) {
         // Logique de planification
         ACLMessage occupe = new ACLMessage(ACLMessage.REQUEST);
-        occupe.setContent("Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
+        occupe.setContent("Ya "+agent.getLocalName()+"Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
         occupe.addReceiver(agent);
         send(occupe);
         ACLMessage response = blockingReceive();
         System.out.println(response.getSender().getLocalName() +"- " + response.getContent());
-
         if (response != null) {
             String request = response.getContent();
             if (request.equals("non")) {
                 this.setOccupe(false);
                 System.out.println(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName());
-
-                // Créer un message pour demander à l'agent de prendre la tâche
                 ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
                 demande.setContent(tache+" "+duree);
-
-                // Ajouter le destinataire (agent spécifique)
                 demande.addReceiver(agent);
-
                 // Envoyer la demande à l'agent spécifique
                 send(demande);
-
                 // Attendre la réponse de l'agent
                 addBehaviour(new AttendreReponsesPlanification(this, demande));
                 addBehaviour(new AttendreReponsesPlanification(this, demande));
-            } else {
+            } else if (request.equals("oui")){
+                System.out.println("***********"+response.getContent());
                 this.setOccupe(true);
                 this.setTache(tache);
             }
@@ -145,20 +139,15 @@ public class AgentChefDeProjet extends Agent {
     public boolean isOccupe() {
         return occupe;
     }
-
     public void setOccupe(boolean occupe) {
         this.occupe = occupe;
     }
-
     public void setTache(String tache) {
         this.tache = tache;
     }
-
     public String getTache() {
         return tache;
     }
-
-
     private class AttendreReponsesPlanification extends AchieveREInitiator {
         public AttendreReponsesPlanification(Agent a, ACLMessage demande) {
             super(a, demande);

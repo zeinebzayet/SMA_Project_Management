@@ -11,7 +11,7 @@ public class AgentTesteur extends Agent {
     private boolean occupe = false;
 
     protected void setup() {
-        System.out.println(getLocalName()+" - Prêt.");
+        System.out.println("Je suis le "+getLocalName()+" - Prêt.");
         registerService();
 
         // Comportement cognitif
