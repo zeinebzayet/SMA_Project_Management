@@ -7,15 +7,34 @@ import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class AgentTesteur extends Agent {
-    private boolean occupe = false;
+    private MessageDisplay messageDisplay;
+
+    private boolean occupe;
+    ImageIcon icon = new ImageIcon(new ImageIcon("./images/test.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
 
     protected void setup() {
-        System.out.println("Je suis le "+getLocalName()+" - Prêt.");
-        registerService();
+        SwingUtilities.invokeLater(() -> {
+            messageDisplay = new MessageDisplay();
+            messageDisplay.setVisible(true);
+            messageDisplay.setTitle(getLocalName());
+            messageDisplay.appendMessage("Je suis le "+getLocalName()+" - Prêt.", icon);
 
-        // Comportement cognitif
-        addBehaviour(new ReceiveTaskBehaviour());
+            //System.out.println("Je suis le "+getLocalName()+" - Prêt.");
+            registerService();
+            this.occupe=false;
+
+            // Comportement cognitif
+            addBehaviour(new ReceiveTaskBehaviour());
+        });
+
+    }
+
+    public void setOccupe(boolean occupe) {
+        this.occupe = occupe;
     }
 
     private class ReceiveTaskBehaviour extends CyclicBehaviour {
@@ -25,7 +44,9 @@ public class AgentTesteur extends Agent {
                 // Si un message est reçu, traiter la tâche
                 String request = message.getContent();
                 if (request.contains("Est_tu_occupes")) {
-                    System.out.println(message.getSender().getLocalName()+ ": "+request);
+                    messageDisplay.appendMessage(message.getSender().getLocalName()+ ": "+request, icon);
+
+                    //System.out.println(message.getSender().getLocalName()+ ": "+request);
                     if (occupe==false) {
                         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
                         response.setContent("non");
@@ -42,7 +63,9 @@ public class AgentTesteur extends Agent {
                 else {
                     if (message != null) {
                         String tache = message.getContent();
-                        System.out.println(getLocalName()+" tache et durée reçues: "+tache);
+                        messageDisplay.appendMessage(getLocalName()+" tache et durée reçues: "+tache, icon);
+
+                        //System.out.println(getLocalName()+" tache et durée reçues: "+tache);
                         // Si un message est reçu, traiter la tâche
                         String[] parts = tache.split(" ");
                         if (parts.length == 2) {
@@ -51,8 +74,6 @@ public class AgentTesteur extends Agent {
                                 int receivedDuree = Integer.parseInt(parts[1]); // Assuming duration is an integer
 
                                 // Now you have extracted values: receivedTache and receivedDuree
-                                System.out.println("Received Tache: " + receivedTache);
-                                System.out.println("Received Duree: " + receivedDuree);
                                 traiterTache(receivedTache, receivedDuree);
                             } catch (NumberFormatException e) {
                                 // Handle the case where duration is not a valid integer
@@ -70,21 +91,46 @@ public class AgentTesteur extends Agent {
         }
     }
 
-    private void traiterTache(String receivedTache,int receivedDuree) {
-        occupe = true;
-        // Simuler un temps de traitement aléatoire entre 1 et 5 secondes
+    private void traiterTache(String receivedTache, int receivedDuree) {
+        setOccupe(true);
         int tempsTraitement = receivedDuree;
+
         try {
-            Thread.sleep(tempsTraitement);
+            messageDisplay.appendMessage(this.getLocalName() + " - Apprentissage en cours...", icon);
+
+            //System.out.println(this.getLocalName() + " - Apprentissage en cours...");
+            // Loop to periodically check for messages during task execution
+            for (int i = 0; i < tempsTraitement; i++) {
+                ACLMessage message = receive();
+                if (message != null && message.getContent().contains("Est_tu_occupes")) {
+                    messageDisplay.appendMessage(message.getSender().getLocalName() + ": " + message.getContent(), icon);
+
+                    //System.out.println(message.getSender().getLocalName() + ": " + message.getContent());
+                    // Respond with "oui" if a relevant message is received
+                    ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
+                    response.setContent("oui");
+                    response.addReceiver(message.getSender());
+                    send(response);
+                }
+
+                // Sleep for 1 second before checking for messages again
+                Thread.sleep(1000);
+            }
+
+            // Simulate the completion of the task
+            messageDisplay.appendMessage(this.getLocalName() + " - Tâche terminée.", icon);
+
+            //System.out.println(this.getLocalName() + " - Tâche terminée.");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(this.getLocalName()+" - Apprentissage en cours...");
-        // Mettez en œuvre ici la logique d'apprentissage basée sur l'expérience
-        occupe = false;
+
+        setOccupe(false);
+
+        // Notify the ChefDeProjet agent about the completion of the task
         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
-        response.setContent("non");
-        response.addReceiver(new AID("AgentChefDeProjet",AID.ISLOCALNAME));
+        response.setContent("J'ai terminé la tâche planifiée");
+        response.addReceiver(new AID("AgentChefDeProjet", AID.ISLOCALNAME));
         send(response);
     }
 

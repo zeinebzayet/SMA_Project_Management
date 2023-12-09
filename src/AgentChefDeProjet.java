@@ -7,8 +7,14 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.proto.AchieveREInitiator;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.*;
 public class AgentChefDeProjet extends Agent {
+    private MessageDisplay messageDisplay;
+    ImageIcon icon = new ImageIcon(new ImageIcon("./images/chef.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
     public Map<String, Map<String, Integer>> getTachesAgents() {
         return tachesAgents;
     }
@@ -19,28 +25,46 @@ public class AgentChefDeProjet extends Agent {
 
     private Map<String, Map<String, Integer>> tachesAgents = new HashMap<>();
 
-    private boolean occupe = false;
-    private String tache = "";
+    private boolean occupe;
+    private String tache;
 
-    private int duree=0;
+    private String typeAgent;
+    private int duree;
     protected void setup() {
-        System.out.println("Agent Chef de Projet - Prêt. ");
 
-        Map<String, Integer> developpeurTasks = new HashMap<>();
-        developpeurTasks.put("TâcheD1", 120);  // Duration in minutes
-        developpeurTasks.put("TâcheD2", 60);
-        developpeurTasks.put("TâcheD3", 20);
-        developpeurTasks.put("TâcheD4", 30);
-        developpeurTasks.put("TâcheD5", 30);
-        Map<String, Integer> testeurTasks = new HashMap<>();
-        testeurTasks.put("TâcheT1", 60);
-        testeurTasks.put("TâcheT2", 30);
-        testeurTasks.put("TâcheT3", 40);
-        tachesAgents.put("AgentDeveloppeur", developpeurTasks);
-        tachesAgents.put("AgentTesteur", testeurTasks);
+        SwingUtilities.invokeLater(() -> {
+            messageDisplay = new MessageDisplay();
+            messageDisplay.setTitle("Agent chef de projet");
+            messageDisplay.setVisible(true);
+            messageDisplay.appendMessage("Agent Chef de Projet - Prêt. ", icon);
 
-        // Schedule the cyclic behavior
-        addBehaviour(new CyclicTaskBehavior());
+            Map<String, Integer> developpeurTasks = new HashMap<>();
+            developpeurTasks.put("TâcheD1", 120);  // Duration in minutes
+            developpeurTasks.put("TâcheD2", 60);
+            developpeurTasks.put("TâcheD3", 20);
+            developpeurTasks.put("TâcheD4", 30);
+            developpeurTasks.put("TâcheD5", 30);
+            Map<String, Integer> testeurTasks = new HashMap<>();
+            testeurTasks.put("TâcheT1", 60);
+            testeurTasks.put("TâcheT2", 30);
+            testeurTasks.put("TâcheT3", 40);
+            tachesAgents.put("AgentDeveloppeur", developpeurTasks);
+            tachesAgents.put("AgentTesteur", testeurTasks);
+            this.setOccupe(false);
+
+            // Schedule the cyclic behavior
+            addBehaviour(new CyclicTaskBehavior());
+        });
+        //System.out.println("Agent Chef de Projet - Prêt. ");
+
+
+    }
+    public String getTypeAgent() {
+        return typeAgent;
+    }
+
+    public void setTypeAgent(String typeAgent) {
+        this.typeAgent = typeAgent;
     }
 
     private class CyclicTaskBehavior extends CyclicBehaviour {
@@ -70,7 +94,7 @@ public class AgentChefDeProjet extends Agent {
                 DFAgentDescription dfd = result[i];
                 AID agentAID = dfd.getName();
                 if (isOccupe()) {
-                    if (i + 1 < result.length) {
+                    if (i + 1 < result.length && this.getTypeAgent().equals(typeAgent) ){
                         // Si l'agent actuel est occupé, passe à l'agent suivant s'il existe
                         DFAgentDescription dfdSuivant = result[i + 1];
                         AID agentAIDSuivant = dfdSuivant.getName();
@@ -105,19 +129,39 @@ public class AgentChefDeProjet extends Agent {
     public int getDuree() {
         return duree;
     }
+    private String getHexColor(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
     private void testerEtaffecterTache(AID agent, String tache, int duree) {
         // Logique de planification
+        System.out.println("**********************************");
         ACLMessage occupe = new ACLMessage(ACLMessage.REQUEST);
-        occupe.setContent("Ya "+agent.getLocalName()+" Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
+        occupe.setContent(agent.getLocalName()+" Est_tu_occupes pour une tache "+tache +" de durée " +duree+ "s");
         occupe.addReceiver(agent);
         send(occupe);
         ACLMessage response = blockingReceive();
-        System.out.println(response.getSender().getLocalName() +"- " + response.getContent());
+
+        //messageDisplay.appendMessage(response.getSender().getLocalName() +"- " + response.getContent(),true, icon);
+        String message=response.getContent();
+        if(response.getContent().equals("oui")){
+            message = "<html><b><font color='" + getHexColor(Color.BLACK) + "'>" +
+                response.getSender().getLocalName()+"</font></b>: <font color='" + getHexColor(Color.red) + "'>" +
+                response.getContent() + "</font></html>";}
+        else if(response.getContent().equals("non")){
+            message = "<html><b><font color='" + getHexColor(Color.BLACK) + "'>" +
+                    response.getSender().getLocalName()+"</font></b>: <font color='" + getHexColor(Color.green) + "'>" +
+                    response.getContent() + "</font></html>";
+            }
+        messageDisplay.appendMessage(message,icon);
+
+        //System.out.println(response.getSender().getLocalName() +"- " + response.getContent());
         if (response != null) {
             String request = response.getContent();
             if (request.equals("non")) {
                 this.setOccupe(false);
-                System.out.println(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName());
+                messageDisplay.appendMessage(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName(), icon);
+
+                //System.out.println(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName());
                 ACLMessage demande = new ACLMessage(ACLMessage.REQUEST);
                 demande.setContent(tache+" "+duree);
                 demande.addReceiver(agent);
@@ -125,11 +169,17 @@ public class AgentChefDeProjet extends Agent {
                 send(demande);
                 // Attendre la réponse de l'agent
                 addBehaviour(new AttendreReponsesPlanification(this, demande));
-                addBehaviour(new AttendreReponsesPlanification(this, demande));
             } else if (request.equals("oui")){
-                System.out.println("***********"+response.getContent());
                 this.setOccupe(true);
                 this.setTache(tache);
+                this.setDuree(duree);
+                if(tache.contains("D")) {
+                    this.setTypeAgent("AgentDeveloppeur");
+                }
+                else{
+                    this.setTypeAgent("AgentTesteur");
+                }
+
             }
         }
     }
