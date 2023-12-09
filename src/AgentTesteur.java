@@ -44,6 +44,11 @@ public class AgentTesteur extends Agent {
                 // Si un message est reçu, traiter la tâche
                 String request = message.getContent();
                 if (request.contains("Est_tu_occupes")) {
+                    if(message.getSender().getLocalName().equals("AgentChefDeProjet"))
+                    {
+                        icon = new ImageIcon(new ImageIcon("./images/chef.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
+                    }
                     messageDisplay.appendMessage(message.getSender().getLocalName()+ ": "+request, icon);
 
                     //System.out.println(message.getSender().getLocalName()+ ": "+request);
@@ -63,6 +68,8 @@ public class AgentTesteur extends Agent {
                 else {
                     if (message != null) {
                         String tache = message.getContent();
+                        icon = new ImageIcon(new ImageIcon("./images/test.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
                         messageDisplay.appendMessage(getLocalName()+" tache et durée reçues: "+tache, icon);
 
                         //System.out.println(getLocalName()+" tache et durée reçues: "+tache);
@@ -96,6 +103,7 @@ public class AgentTesteur extends Agent {
         int tempsTraitement = receivedDuree;
 
         try {
+
             messageDisplay.appendMessage(this.getLocalName() + " - Apprentissage en cours...", icon);
 
             //System.out.println(this.getLocalName() + " - Apprentissage en cours...");
@@ -103,6 +111,11 @@ public class AgentTesteur extends Agent {
             for (int i = 0; i < tempsTraitement; i++) {
                 ACLMessage message = receive();
                 if (message != null && message.getContent().contains("Est_tu_occupes")) {
+                    if(message.getSender().getLocalName().equals("AgentChefDeProjet"))
+                    {
+                        icon = new ImageIcon(new ImageIcon("./images/chef.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
+                    }
                     messageDisplay.appendMessage(message.getSender().getLocalName() + ": " + message.getContent(), icon);
 
                     //System.out.println(message.getSender().getLocalName() + ": " + message.getContent());
@@ -116,6 +129,7 @@ public class AgentTesteur extends Agent {
                 // Sleep for 1 second before checking for messages again
                 Thread.sleep(1000);
             }
+            icon = new ImageIcon(new ImageIcon("./images/test.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
 
             // Simulate the completion of the task
             messageDisplay.appendMessage(this.getLocalName() + " - Tâche terminée.", icon);
@@ -129,7 +143,7 @@ public class AgentTesteur extends Agent {
 
         // Notify the ChefDeProjet agent about the completion of the task
         ACLMessage response = new ACLMessage(ACLMessage.REQUEST);
-        response.setContent("J'ai terminé la tâche planifiée");
+        response.setContent(getLocalName()+ ": J'ai terminé la tâche planifiée");
         response.addReceiver(new AID("AgentChefDeProjet", AID.ISLOCALNAME));
         send(response);
     }

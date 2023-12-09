@@ -152,6 +152,16 @@ public class AgentChefDeProjet extends Agent {
                     response.getSender().getLocalName()+"</font></b>: <font color='" + getHexColor(Color.green) + "'>" +
                     response.getContent() + "</font></html>";
             }
+        if(response.getSender().getLocalName().equals("Developpeur 1") ||response.getSender().getLocalName().equals("Developpeur 2")|| response.getSender().getLocalName().equals("Developpeur 3") )
+        {
+            icon = new ImageIcon(new ImageIcon("./images/devp.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
+        }
+        if(response.getSender().getLocalName().equals("Testeur 1") ||response.getSender().getLocalName().equals("Testeur 2")|| response.getSender().getLocalName().equals("Testeur 3") )
+        {
+            icon = new ImageIcon(new ImageIcon("./images/test.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
+        }
         messageDisplay.appendMessage(message,icon);
 
         //System.out.println(response.getSender().getLocalName() +"- " + response.getContent());
@@ -159,6 +169,8 @@ public class AgentChefDeProjet extends Agent {
             String request = response.getContent();
             if (request.equals("non")) {
                 this.setOccupe(false);
+                icon = new ImageIcon(new ImageIcon("./images/chef.png").getImage().getScaledInstance(30, 30, Image.SCALE_SMOOTH));
+
                 messageDisplay.appendMessage(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName(), icon);
 
                 //System.out.println(getLocalName()+" - Planifier la tâche : " +tache+" de durée "+duree+" s pour l'agent: "+response.getSender().getLocalName());
